@@ -8,8 +8,9 @@ property that is off by default.
 
 - Tested on Windows 11, NVIDIA RTX 5070 12 GB, CUDA 12.8, OptiX.
 - Blender addon: [Diginaat/BlendLuxCore](https://github.com/Diginaat/BlendLuxCore)
-  (download the zip from its Releases). **For now the addon works only with
-  Blender 4.5 LTS on Windows x64**; Blender 5.x is not supported yet.
+  (download the zip from its Releases). **The addon works with Blender 4.5 LTS
+  and Blender 5.2 LTS on Windows x64** (one zip for both). Set the GPU API to
+  CUDA/OptiX (the fork addon's default): the speed-ups are made for it.
 - Plan, measurements and decisions: [`docs/gpu-optimization/`](docs/gpu-optimization/).
 
 ### Speed compared to the original LuxCore

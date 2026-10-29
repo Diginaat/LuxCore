@@ -1373,3 +1373,45 @@ wheels). Release zip
 clean remove + `install-file` in Blender 4.5 loads the fork pyd (luxloader
 skips PyPI). `gh` uses `GH_TOKEN` from `git credential fill`: the stored
 token has no `read:org`, so `gh auth login --with-token` refuses it.
+
+### 2026-10-29: Blender 5.2 LTS support (branch `blender-5.2`)
+
+User request: the addon for Blender 4.5 LTS and 5.2 LTS, one release zip.
+User decision: this work stays on branch `blender-5.2` in both repos;
+`main` keeps the 4.5-only release.
+
+- Blender 5.2.3 runs Python 3.13.13 (4.5.13: Python 3.11.15). Blender
+  installs only the manifest wheels whose tag matches its Python, so one zip
+  carries a cp311 and a cp313 pyluxcore wheel. The addon code already
+  handles the 5.x API (upstream `is_blender_5` paths).
+- cp313 build: cmake `Python_EXECUTABLE` = Blender 5.2's `python.exe`,
+  headers and `python313.lib` from the nuget package `python.3.13.17`
+  (`bench\tools\python313-nuget`, extract `tools/include` with its
+  `cpython/` and `internal/` subfolders). Then reconfigure back to Python
+  3.11 (`C:\Program Files\Adobe\Adobe Substance 3D Designer\plugins\pythonsdk`).
+- Bug (both Blenders): the OIDN denoiser made Blender exit (exit 127) at
+  "IntelOIDNPlugin filtering image". OIDN loads
+  `LuxOpenImageDenoise_device_cpu.dll` by name, so delvewheel kept it
+  unmangled with plain `tbb12.dll`/`msvcp140.dll` imports, which bind to
+  Blender's own DLLs. Fix: `wheel_input.py` puts the device DLL into
+  `pyluxcore.libs/` and `delvewheel repair --analyze-existing` patches its
+  imports to the mangled names (as in the stock wheel).
+- Bug (T6.3): path guiding failed to compile on OpenCL ("passing 'const
+  __constant float *' to parameter of type 'const __global float *'"):
+  `VLOAD3F()` on the `__constant` taskConfig. CUDA drops address spaces,
+  so only OpenCL failed. Fixed with `MAKE_FLOAT3`. luxcoreconsole LuxBall
+  16 spp: base, `path.guiding.enable`, `path.hybridbackforward.enable` and
+  DanishMood `miscompensation.enable` all render on OpenCL and CUDA.
+- The addon's default GPU API was OpenCL (upstream), so Blender rendered on
+  NVIDIA OpenCL, not CUDA/OptiX. Fork addon default is now CUDA/OptiX.
+  Blender 4.5, luxball.blend 1000x1000, 25 s, through the addon: OpenCL
+  13.7, CUDA 19.3 M samples/sec (+41%), same image mean 0.5556.
+- pyluxcore in Blender 5.2 (LuxMark-LuxBall, CUDA, 25 s, warm cache):
+  stock 2.11.1 25.20, fork 35.14 M samples/sec (+39%).
+- Addon renders (luxball, DanishMood, LynxSpider, 32 spp, OIDN on; luxball
+  with guiding on CUDA and OpenCL) exit 0 in both Blenders; image means
+  4.5 vs 5.2 agree (0.5562/0.5555, 0.2702/0.2744 PhotonGI variance,
+  0.2088/0.2086).
+- Release zip
+  `D:\REPO\LuxCoreRepo\bench\addon\BlendLuxCoreDiginaat-2.11.1-blender45-and-52-windows-gpuopt-2.zip`
+  (nvrtc + cp311 + cp313 wheels, from BlendLuxCore `blender-5.2`).

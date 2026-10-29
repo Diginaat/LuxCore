@@ -77,7 +77,10 @@ OPENCL_FORCE_INLINE uint PathGuiding_CellKey(__constant const GPUTaskConfigurati
 		const float3 p, const float3 n) {
 	// The cell size is a power of 2 close to the distance from the camera
 	// times cellScale
-	const float3 cameraPos = VLOAD3F(&taskConfig->pathTracer.guiding.cameraPos.x);
+	// taskConfig is __constant: VLOAD3F() takes a __global pointer, so it
+	// compiles on CUDA but not on OpenCL
+	const float3 cameraPos = MAKE_FLOAT3(taskConfig->pathTracer.guiding.cameraPos.x,
+			taskConfig->pathTracer.guiding.cameraPos.y, taskConfig->pathTracer.guiding.cameraPos.z);
 	const float distance = fmax(length(p - cameraPos), 1e-3f);
 	const int level = (int)floor(log2(distance * taskConfig->pathTracer.guiding.cellScale));
 	const float invCellSize = exp2(-(float)level);
